@@ -85,7 +85,7 @@ def get_centre_from_bbox(bbox_arr,height):
     box_width = np.abs(bbox_wrapper.x0-bbox_wrapper.x1)
     box_height = np.abs(bbox_wrapper.y0-bbox_wrapper.y1)
     centre_x = bbox_wrapper.x0 + (box_width/2)
-    centre_y = (height - bbox_wrapper.y0) + (box_height/2)
+    centre_y = (height - bbox_wrapper.y0) - (box_height/2)
     centre_coords.append([centre_x,centre_y,box_width,box_height])  
 
   return centre_coords
