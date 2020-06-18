@@ -9,7 +9,7 @@ from PIL import Image
 
 
 ## TO DO: parse these parameters as arguments with argparse ##
-No_of_datasets = 500 #No of total datasets generated, also number of images that will be generated
+No_of_datasets = 1000 #No of total datasets generated, also number of images that will be generated
 total_samples = 30 # No of points in each image
 train_test_ratio = 0.7 # 70% data will be used to train, 20% to test
 class_names = ["points"] # by default only points and ticks are generated
