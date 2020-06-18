@@ -9,7 +9,7 @@ from PIL import Image
 
 
 ## TO DO: parse these parameters as arguments with argparse ##
-No_of_datasets = 1000 #No of total datasets generated, also number of images that will be generated
+No_of_datasets = 1 #No of total datasets generated, also number of images that will be generated
 total_samples = 30 # No of points in each image
 train_test_ratio = 0.7 # 70% data will be used to train, 20% to test
 class_names = ["points"] # by default only points and ticks are generated
@@ -275,10 +275,10 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
         ax.add_patch(bbox)
         
 #   plt.axis("off")
-#   plt.gca().xaxis.set_major_locator(NullLocator())
-#   plt.gca().yaxis.set_major_locator(NullLocator())
-#   plt.savefig("data/custom/true_bb_images/Bounded_"+str(i+1))
-#   plt.close(fig)
+  plt.gca().xaxis.set_major_locator(NullLocator())
+  plt.gca().yaxis.set_major_locator(NullLocator())
+  plt.savefig("data/custom/true_bb_images/Bounded_"+str(i+1))
+  plt.close(fig)
 
 num_train = round(len(dataset)*train_test_ratio)
 if "points" in class_names:
