@@ -3,18 +3,30 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import matplotlib.patches as patches
+from matplotlib.ticker import NullLocator
+from PIL import Image
+
+
 ## TO DO: parse these parameters as arguments with argparse ##
-No_of_datasets = 2500 # No of total datasets generated, also number of images that will be generated
+No_of_datasets = 500 #No of total datasets generated, also number of images that will be generated
 total_samples = 30 # No of points in each image
 train_test_ratio = 0.7 # 70% data will be used to train, 20% to test
-class_names = ["points","ticks"] # by default only points and ticks are generated
+class_names = ["points"] # by default only points and ticks are generated
+linear_data_ratio = 1.0 #100% data will be linearly distributed
 
-def gen_data(total_samples, No_of_datasets):
+def gen_data(total_samples, No_of_datasets,rnd_series,linear_data_ratio):
   distribution_param = {}
   data = []
   dist_type = []
+  new_rnd_series = []
+  if len(rnd_series):
+    rnd_series = rnd_series[0:int(No_of_datasets*linear_data_ratio)]  #30 percent linear data similar to x distribution
   for i in range(No_of_datasets):
-    rnd = random.randint(1,8)
+    if i<len(rnd_series):
+        rnd = rnd_series[i]
+    else:
+        rnd = random.randint(1,8)
     if rnd == 1:
       a,b = 1,1000
       data.append([np.random.uniform(1,1000,total_samples)])
@@ -61,17 +73,20 @@ def gen_data(total_samples, No_of_datasets):
       data.append([np.random.power(a, total_samples)])
       dist_type.append("power")
       distribution_param["power"] = ("shape = "+ str(a))
-
-  return data,dist_type,distribution_param
+    new_rnd_series.append(rnd)
+    
+  return data,dist_type,distribution_param,new_rnd_series
 
 
 # Generate Datasets with total_samples number of points
-x_data,x_dist_type,x_distribution_param = gen_data(total_samples,No_of_datasets)
-y_data,y_dist_type,y_distribution_param = gen_data(total_samples,No_of_datasets)
+dists = []
+x_data,x_dist_type,x_distribution_param, rnd_series = gen_data(total_samples,No_of_datasets, [],linear_data_ratio)
+y_data,y_dist_type,y_distribution_param, _ = gen_data(total_samples,No_of_datasets,rnd_series,linear_data_ratio)
 
 data = []
 for (x,y) in zip(x_data,y_data):
-  data.append([np.ndarray.tolist(x[0]),np.ndarray.tolist(y[0])])
+    data.append([np.ndarray.tolist(x[0]),np.ndarray.tolist(y[0])])
+        
 
 dataset = []
 for i,d in enumerate(data):
@@ -85,7 +100,7 @@ def get_centre_from_bbox(bbox_arr,height):
     box_width = np.abs(bbox_wrapper.x0-bbox_wrapper.x1)
     box_height = np.abs(bbox_wrapper.y0-bbox_wrapper.y1)
     centre_x = bbox_wrapper.x0 + (box_width/2)
-    centre_y = (height - bbox_wrapper.y0) - (box_height/2)
+    centre_y = (height - bbox_wrapper.y0) + (box_height/2)
     centre_coords.append([centre_x,centre_y,box_width,box_height])  
 
   return centre_coords
@@ -210,19 +225,33 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
 
   x_label_coords = get_centre_from_bbox(x_label_bounds[1:-1],height)
   y_label_coords = get_centre_from_bbox(y_label_bounds[1:-1],height)
+  
 
+# Create plot
+  img = np.array(Image.open('data/custom/images/1.jpg'))
+  plt.figure()
+  fig, ax = plt.subplots(1)
+  ax.imshow(img)   
   with open("data/custom/labels/"+str(i+1)+".txt",'w+') as img_labels:
-
+    
     if "points" in class_names:
       for xp, yp in zip(xpix, ypix):
         img_labels.write("0"+" "+str(xp/width)+" "+str(yp/height)+" "+str(bounding_box/width)+" "+str(bounding_box/height)+"\n")
-    
+        bbox = patches.Rectangle((xp-bounding_box, yp+bounding_box), bounding_box, bounding_box, linewidth=0.5, edgecolor='black', facecolor="none")
+        ax.add_patch(bbox)
+      
+
+        
     if "ticks" in class_names:
       for x_j, y_j in x_tick_pos:
         img_labels.write("1"+" "+str(x_j/width)+" "+str(y_j/height)+" "+str(tick_box_size/width)+" "+str(tick_box_size/height)+"\n")
-
+        bbox = patches.Rectangle((x_j-tick_box_size, y_j+tick_box_size), tick_box_size, tick_box_size, linewidth=0.5, edgecolor='black',facecolor="none")
+        ax.add_patch(bbox)
+        
       for x_j, y_j in y_tick_pos:
         img_labels.write("1"+" "+str(x_j/width)+" "+str(y_j/height)+" "+str(tick_box_size/width)+" "+str(tick_box_size/height)+"\n")
+        bbox = patches.Rectangle((x_j-tick_box_size, y_j+tick_box_size), tick_box_size, tick_box_size, linewidth=0.5, edgecolor='black',facecolor="none")
+        ax.add_patch(bbox)
 
     if "labels" in class_names:
       for item in x_label_coords:
@@ -231,6 +260,9 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
         box_width_label = item[2]
         box_height_label = item[3]
         img_labels.write("2"+" "+str(centre_x_label/width)+" "+str(centre_y_label/height)+" "+str(box_width_label/width)+" "+str(box_height_label/height)+"\n")
+        print("change")
+        bbox = patches.Rectangle((centre_x_label, centre_y_label), box_width_label, box_height_label, linewidth=0.5, edgecolor='black',facecolor="none")
+        ax.add_patch(bbox)
 
       for item in y_label_coords:
         centre_x_label = item[0]
@@ -238,7 +270,15 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
         box_width_label = item[2]
         box_height_label = item[3]
         img_labels.write("2"+" "+str(centre_x_label/width)+" "+str(centre_y_label/height)+" "+str(box_width_label/width)+" "+str(box_height_label/height)+"\n")
-  plt.close(fig)
+        bbox = patches.Rectangle((centre_x_label, centre_y_label), box_width_label, box_height_label, linewidth=0.5, edgecolor='black',facecolor="none")
+        print(centre_x_label,centre_y_label,box_width_label,box_height_label)
+        ax.add_patch(bbox)
+        
+#   plt.axis("off")
+#   plt.gca().xaxis.set_major_locator(NullLocator())
+#   plt.gca().yaxis.set_major_locator(NullLocator())
+#   plt.savefig("data/custom/true_bb_images/Bounded_"+str(i+1))
+#   plt.close(fig)
 
 num_train = round(len(dataset)*train_test_ratio)
 if "points" in class_names:
