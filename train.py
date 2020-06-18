@@ -148,7 +148,7 @@ if __name__ == "__main__":
             model.seen += imgs.size(0)
             
         
-        if (epoch+1) % opt.evaluation_interval == 0:
+        if (epoch+1) % opt.evaluation_interval == 1:
             print("\n---- Evaluating Model ----")
             # Evaluate the model on the validation set
             precision, recall, AP, f1, ap_class = evaluate(
