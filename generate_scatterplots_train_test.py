@@ -13,7 +13,7 @@ No_of_datasets = 500 #No of total datasets generated, also number of images that
 total_samples = 30 # No of points in each image
 train_test_ratio = 0.7 # 70% data will be used to train, 20% to test
 class_names = ["points"] # by default only points and ticks are generated
-linear_data_ratio = 1.0 #100% data will be linearly distributed
+linear_data_ratio = 1.0  #100% data will be linearly distributed
 
 def gen_data(total_samples, No_of_datasets,rnd_series,linear_data_ratio):
   distribution_param = {}
