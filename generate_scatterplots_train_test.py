@@ -231,26 +231,26 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   y_label_coords = get_centre_from_bbox(y_label_bounds[1:-1],height)
   
   img_read = np.array(img_read)
-	for item_x_label_bounds in x_label_coords:
-	x_0 = int(item_x_label_bounds[0])
-	width_x0 = int(item_x_label_bounds[2])
-	y_0 = int(item_x_label_bounds[1])
-	height_y0 = int(item_x_label_bounds[3])
-	print(x_0,y_0,width_x0,height_y0)
-	cv2.rectangle(img_read,(x_0-width_x0,y_0-height_y0),(x_0+width_x0,y_0+height_y0),(0,255,0),2)
+  for item_x_label_bounds in x_label_coords:
+    x_0 = int(item_x_label_bounds[0])
+    width_x0 = int(item_x_label_bounds[2])
+    y_0 = int(item_x_label_bounds[1])
+    height_y0 = int(item_x_label_bounds[3])
+    print(x_0,y_0,width_x0,height_y0)
+    cv2.rectangle(img_read,(x_0-width_x0,y_0-height_y0),(x_0+width_x0,y_0+height_y0),(0,255,0),2)
 	
-	for item_x_label_bounds in y_label_coords:
-	x_0 = int(item_x_label_bounds[0])
-	width_x0 = int(item_x_label_bounds[2])
-	y_0 = int(item_x_label_bounds[1])
-	height_y0 = int(item_x_label_bounds[3])
-	print(x_0,y_0,width_x0,height_y0)
-	cv2.rectangle(img_read,(x_0-width_x0,y_0-height_y0),(x_0+width_x0,y_0+height_y0),(0,255,0),2)
-	
-	for xp_1, yp_1 in zip(xpix, ypix):
-	x_0 = int(xp_1)
-	y_0 = int(yp_1)
-	cv2.rectangle(img_read,(x_0-int(bounding_box),y_0-int(bounding_box)),(x_0+int(bounding_box),y_0+int(bounding_box)),(0,255,0),1)
+  for item_x_label_bounds in y_label_coords:
+    x_0 = int(item_x_label_bounds[0])
+    width_x0 = int(item_x_label_bounds[2])
+    y_0 = int(item_x_label_bounds[1])
+    height_y0 = int(item_x_label_bounds[3])
+    print(x_0,y_0,width_x0,height_y0)
+    cv2.rectangle(img_read,(x_0-width_x0,y_0-height_y0),(x_0+width_x0,y_0+height_y0),(0,255,0),2)
+    
+  for xp_1, yp_1 in zip(xpix, ypix):
+    x_0 = int(xp_1)
+    y_0 = int(yp_1)
+    cv2.rectangle(img_read,(x_0-int(bounding_box),y_0-int(bounding_box)),(x_0+int(bounding_box),y_0+int(bounding_box)),(0,255,0),1)
   
   cv2.imwrite('data/custom/true_bb_images/Bounded_'+str(i+1)), im)
 
