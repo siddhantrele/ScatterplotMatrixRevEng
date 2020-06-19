@@ -252,7 +252,7 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
     y_0 = int(yp_1)
     cv2.rectangle(img_read,(x_0-int(bounding_box),y_0-int(bounding_box)),(x_0+int(bounding_box),y_0+int(bounding_box)),(0,255,0),1)
   
-  cv2.imwrite(r'data/custom/true_bb_images/Bounded_'+str(i+1), im)
+  cv2.imwrite(r'data/custom/true_bb_images/'+str(i+1)+'.jpg')
 
 # Create plot
 #   img = np.array(Image.open('data/custom/images/1.jpg'))
