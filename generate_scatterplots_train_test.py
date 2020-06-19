@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.ticker import NullLocator
 from PIL import Image
+import cv2
+from google.colab.patches import cv2_imshow
 
 
 ## TO DO: parse these parameters as arguments with argparse ##
@@ -173,7 +175,9 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   meta_data["data_filename"] = (str(i+1)+'.csv')
   path = 'data/custom/images/'+str(i+1)+'.jpg'
   plt.savefig(r'data/custom/images/'+str(i+1)+'.jpg')
-
+  
+  img_read = cv2.imread(r'data/custom/images/'+str(i+1)+'.jpg')
+  
   if i<=num_train:
     with open("data/custom/train.txt",'a') as train_list:
       if i==num_train:
@@ -205,7 +209,7 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   # print("Dimensions of image are:")
   # print(width,height)
   # print("Box size")
-  bounding_box = fig.dpi*5/70.0
+  bounding_box = fig.dpi*5/90.0
 
   x_tick_pos = [ ax.transLimits.transform(textobj.get_position()) for textobj in ax.get_xticklabels() if len(textobj.get_text())>0]
   y_tick_pos = [ ax.transLimits.transform(textobj.get_position()) for textobj in ax.get_yticklabels() if len(textobj.get_text())>0]
@@ -226,32 +230,55 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   x_label_coords = get_centre_from_bbox(x_label_bounds[1:-1],height)
   y_label_coords = get_centre_from_bbox(y_label_bounds[1:-1],height)
   
+  img_read = np.array(img_read)
+	for item_x_label_bounds in x_label_coords:
+	x_0 = int(item_x_label_bounds[0])
+	width_x0 = int(item_x_label_bounds[2])
+	y_0 = int(item_x_label_bounds[1])
+	height_y0 = int(item_x_label_bounds[3])
+	print(x_0,y_0,width_x0,height_y0)
+	cv2.rectangle(img_read,(x_0-width_x0,y_0-height_y0),(x_0+width_x0,y_0+height_y0),(0,255,0),2)
+	
+	for item_x_label_bounds in y_label_coords:
+	x_0 = int(item_x_label_bounds[0])
+	width_x0 = int(item_x_label_bounds[2])
+	y_0 = int(item_x_label_bounds[1])
+	height_y0 = int(item_x_label_bounds[3])
+	print(x_0,y_0,width_x0,height_y0)
+	cv2.rectangle(img_read,(x_0-width_x0,y_0-height_y0),(x_0+width_x0,y_0+height_y0),(0,255,0),2)
+	
+	for xp_1, yp_1 in zip(xpix, ypix):
+	x_0 = int(xp_1)
+	y_0 = int(yp_1)
+	cv2.rectangle(img_read,(x_0-int(bounding_box),y_0-int(bounding_box)),(x_0+int(bounding_box),y_0+int(bounding_box)),(0,255,0),1)
+  
+  cv2.imwrite('data/custom/true_bb_images/Bounded_'+str(i+1)), im)
 
 # Create plot
-  img = np.array(Image.open('data/custom/images/1.jpg'))
-  plt.figure()
-  fig, ax = plt.subplots(1)
-  ax.imshow(img)   
+#   img = np.array(Image.open('data/custom/images/1.jpg'))
+#   plt.figure()
+#   fig, ax = plt.subplots(1)
+#   ax.imshow(img)   
   with open("data/custom/labels/"+str(i+1)+".txt",'w+') as img_labels:
     
     if "points" in class_names:
       for xp, yp in zip(xpix, ypix):
         img_labels.write("0"+" "+str(xp/width)+" "+str(yp/height)+" "+str(bounding_box/width)+" "+str(bounding_box/height)+"\n")
-        bbox = patches.Rectangle((xp-bounding_box, yp+bounding_box), bounding_box, bounding_box, linewidth=0.5, edgecolor='black', facecolor="none")
-        ax.add_patch(bbox)
+#         bbox = patches.Rectangle((xp-bounding_box, yp+bounding_box), bounding_box, bounding_box, linewidth=0.5, edgecolor='black', facecolor="none")
+#         ax.add_patch(bbox)
       
 
         
     if "ticks" in class_names:
       for x_j, y_j in x_tick_pos:
         img_labels.write("1"+" "+str(x_j/width)+" "+str(y_j/height)+" "+str(tick_box_size/width)+" "+str(tick_box_size/height)+"\n")
-        bbox = patches.Rectangle((x_j-tick_box_size, y_j+tick_box_size), tick_box_size, tick_box_size, linewidth=0.5, edgecolor='black',facecolor="none")
-        ax.add_patch(bbox)
+#         bbox = patches.Rectangle((x_j-tick_box_size, y_j+tick_box_size), tick_box_size, tick_box_size, linewidth=0.5, edgecolor='black',facecolor="none")
+#         ax.add_patch(bbox)
         
       for x_j, y_j in y_tick_pos:
         img_labels.write("1"+" "+str(x_j/width)+" "+str(y_j/height)+" "+str(tick_box_size/width)+" "+str(tick_box_size/height)+"\n")
-        bbox = patches.Rectangle((x_j-tick_box_size, y_j+tick_box_size), tick_box_size, tick_box_size, linewidth=0.5, edgecolor='black',facecolor="none")
-        ax.add_patch(bbox)
+#         bbox = patches.Rectangle((x_j-tick_box_size, y_j+tick_box_size), tick_box_size, tick_box_size, linewidth=0.5, edgecolor='black',facecolor="none")
+#         ax.add_patch(bbox)
 
     if "labels" in class_names:
       for item in x_label_coords:
@@ -260,9 +287,9 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
         box_width_label = item[2]
         box_height_label = item[3]
         img_labels.write("2"+" "+str(centre_x_label/width)+" "+str(centre_y_label/height)+" "+str(box_width_label/width)+" "+str(box_height_label/height)+"\n")
-        print("change")
-        bbox = patches.Rectangle((centre_x_label, centre_y_label), box_width_label, box_height_label, linewidth=0.5, edgecolor='black',facecolor="none")
-        ax.add_patch(bbox)
+#         print("change")
+#         bbox = patches.Rectangle((centre_x_label, centre_y_label), box_width_label, box_height_label, linewidth=0.5, edgecolor='black',facecolor="none")
+#         ax.add_patch(bbox)
 
       for item in y_label_coords:
         centre_x_label = item[0]
@@ -270,14 +297,14 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
         box_width_label = item[2]
         box_height_label = item[3]
         img_labels.write("2"+" "+str(centre_x_label/width)+" "+str(centre_y_label/height)+" "+str(box_width_label/width)+" "+str(box_height_label/height)+"\n")
-        bbox = patches.Rectangle((centre_x_label, centre_y_label), box_width_label, box_height_label, linewidth=0.5, edgecolor='black',facecolor="none")
-        print(centre_x_label,centre_y_label,box_width_label,box_height_label)
-        ax.add_patch(bbox)
+#         bbox = patches.Rectangle((centre_x_label, centre_y_label), box_width_label, box_height_label, linewidth=0.5, edgecolor='black',facecolor="none")
+#         print(centre_x_label,centre_y_label,box_width_label,box_height_label)
+#         ax.add_patch(bbox)
         
 #   plt.axis("off")
-  plt.gca().xaxis.set_major_locator(NullLocator())
-  plt.gca().yaxis.set_major_locator(NullLocator())
-  plt.savefig("data/custom/true_bb_images/Bounded_"+str(i+1))
+#   plt.gca().xaxis.set_major_locator(NullLocator())
+#   plt.gca().yaxis.set_major_locator(NullLocator())
+#   plt.savefig("data/custom/true_bb_images/Bounded_"+str(i+1))
   plt.close(fig)
 
 num_train = round(len(dataset)*train_test_ratio)
