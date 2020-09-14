@@ -124,8 +124,8 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   #3. Image dimensions, padding
   x = random.randint(7,12)
   y = random.randint(7,12)
-  x = 12
-  y = 5
+  x = 4.16
+  y = 4.16
   figsize=(x,y)
   meta_data["image_dim"] = (x,y)
 
