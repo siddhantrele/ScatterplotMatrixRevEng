@@ -2,12 +2,17 @@ import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+import cv2
+from google.colab.patches import cv2_imshow
 
 ## TO DO: parse these parameters as arguments with argparse ##
-No_of_datasets = 2500 # No of total datasets generated, also number of images that will be generated
+No_of_datasets = 1000 # No of total datasets generated, also number of images that will be generated
 total_samples = 30 # No of points in each image
 train_test_ratio = 0.7 # 70% data will be used to train, 20% to test
-class_names = ["points","ticks"] # by default only points and ticks are generated
+class_names = ["points"] # by default only points are generated
+linear_data_ratio = 1.0
 
 def gen_data(total_samples, No_of_datasets):
   distribution_param = {}
@@ -67,7 +72,21 @@ def gen_data(total_samples, No_of_datasets):
 
 # Generate Datasets with total_samples number of points
 x_data,x_dist_type,x_distribution_param = gen_data(total_samples,No_of_datasets)
-y_data,y_dist_type,y_distribution_param = gen_data(total_samples,No_of_datasets)
+
+y_data = []
+y_dist_type = []
+y_distribution_param = {}
+number_of_linear_datasets = int(No_of_datasets*linear_data_ratio)
+y_data = x_data[:number_of_linear_datasets]
+y_dist_type = x_dist_type[:number_of_linear_datasets]
+y_distribution_param = {dist: x_distribution_param[dist] for dist in y_dist_type}   # because distribution params are fixed
+
+
+y_data_d,y_dist_type_d,y_distribution_param_d = gen_data(total_samples,No_of_datasets-number_of_linear_datasets)
+y_data += y_data_d
+y_dist_type += y_dist_type_d
+y_distribution_param.update(y_distribution_param_d)
+
 
 data = []
 for (x,y) in zip(x_data,y_data):
@@ -75,7 +94,8 @@ for (x,y) in zip(x_data,y_data):
 
 dataset = []
 for i,d in enumerate(data):
-  d = pd.DataFrame(np.transpose(d), columns=[x_dist_type[i],y_dist_type[i]])
+  d = pd.DataFrame(np.transpose(d), columns=[x_dist_type[i]+'_1',y_dist_type[i]+'_2'])
+  # d = pd.DataFrame(np.transpose(d), columns=[x_dist_type[i],y_dist_type[i]])
   dataset.append(d)
   d.to_csv(r'data/custom/dataset_csv/'+str(i+1)+'.csv')
 
@@ -155,9 +175,14 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   y_lower_lim,y_upper_lim = yticks[1],yticks[len(yticks)-2]
   meta_data["x_scale_y_scale"]  = ((x_lower_lim,x_upper_lim),(y_lower_lim,y_upper_lim))
 
+  # plt.gca().add_patch(patches.Rectangle((50,100),40,30,linewidth=1,edgecolor='r',facecolor='none'))
+  # plt.show()
+
   meta_data["data_filename"] = (str(i+1)+'.csv')
   path = 'data/custom/images/'+str(i+1)+'.jpg'
   plt.savefig(r'data/custom/images/'+str(i+1)+'.jpg')
+
+  # cv2_imshow(img_read)
 
   if i<=num_train:
     with open("data/custom/train.txt",'a') as train_list:
@@ -176,6 +201,7 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   mdata['1'] = (meta_data.values())
   mdata.to_csv(r'data/custom/dataset_metadata/'+str(i+1)+'.txt',index= False,header= False)
 
+
   xy_pixels = ax.transData.transform(np.vstack([dataset[col1],dataset[col2]]).T)
   xpix, ypix = xy_pixels.T
 
@@ -190,7 +216,7 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   # print("Dimensions of image are:")
   # print(width,height)
   # print("Box size")
-  bounding_box = fig.dpi*5/70.0
+  bounding_box = fig.dpi*5/90.0
 
   x_tick_pos = [ ax.transLimits.transform(textobj.get_position()) for textobj in ax.get_xticklabels() if len(textobj.get_text())>0]
   y_tick_pos = [ ax.transLimits.transform(textobj.get_position()) for textobj in ax.get_yticklabels() if len(textobj.get_text())>0]
@@ -211,11 +237,44 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   x_label_coords = get_centre_from_bbox(x_label_bounds[1:-1],height)
   y_label_coords = get_centre_from_bbox(y_label_bounds[1:-1],height)
 
-  with open("data/custom/labels/"+str(i+1)+".txt",'w+') as img_labels:
+  
+  # for item_x_label_bounds in x_label_coords:
+  #   x_0 = int(item_x_label_bounds[0])
+  #   width_x0 = int(item_x_label_bounds[2])
+  #   y_0 = int(item_x_label_bounds[1])
+  #   height_y0 = int(item_x_label_bounds[3])
+  #   #print(x_0,y_0,width_x0,height_y0)
+  #   cv2.rectangle(img_read,(x_0-width_x0,y_0-height_y0),(x_0+width_x0,y_0+height_y0),(0,255,0),2)
 
+  # for item_x_label_bounds in y_label_coords:
+  #   x_0 = int(item_x_label_bounds[0])
+  #   width_x0 = int(item_x_label_bounds[2])
+  #   y_0 = int(item_x_label_bounds[1])
+  #   height_y0 = int(item_x_label_bounds[3])
+  #   #print(x_0,y_0,width_x0,height_y0)
+  #   cv2.rectangle(img_read,(x_0-width_x0,y_0-height_y0),(x_0+width_x0,y_0+height_y0),(0,255,0),2)
+
+#   for xp_1, yp_1 in zip(xpix, ypix):
+#     x_0 = int(xp_1)
+#     y_0 = int(yp_1)
+#     cv2.rectangle(img_read,(x_0-int(bounding_box),y_0-int(bounding_box)),(x_0+int(bounding_box),y_0+int(bounding_box)),(0,255,0),1)
+    # cv2.rectangle(img_read,(int(xp_1-bounding_box),int(yp_1-bounding_box)),(int(xp_1+bounding_box),int(yp_1+bounding_box)),(0,255,0),1)
+
+#   cv2.imwrite(r'data/custom/true_bb_images/'+str(i+1)+'.jpg',img_read)
+
+#   cv2_imshow(img_read)
+
+
+  with open("data/custom/labels/"+str(i+1)+".txt",'w+') as img_labels:
+      
+    img_read = cv2.imread(r'data/custom/images/'+str(i+1)+'.jpg')
+    img_read = np.array(img_read)
     if "points" in class_names:
       for xp, yp in zip(xpix, ypix):
         img_labels.write("0"+" "+str(xp/width)+" "+str(yp/height)+" "+str(bounding_box/width)+" "+str(bounding_box/height)+"\n")
+        x_0 = int(xp)
+        y_0 = int(yp)
+        cv2.rectangle(img_read,(x_0-int(bounding_box),y_0-int(bounding_box)),(x_0+int(bounding_box),y_0+int(bounding_box)),(0,255,0),1)
     
     if "ticks" in class_names:
       for x_j, y_j in x_tick_pos:
@@ -231,6 +290,7 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
         box_width_label = item[2]
         box_height_label = item[3]
         img_labels.write("2"+" "+str(centre_x_label/width)+" "+str(centre_y_label/height)+" "+str(box_width_label/width)+" "+str(box_height_label/height)+"\n")
+        cv2.rectangle(img_read,(int(centre_x_label-box_width_label),int(centre_y_label-box_height_label)),(int(centre_x_label+box_width_label),int(centre_y_label+box_height_label)),(0,255,0),2)
 
       for item in y_label_coords:
         centre_x_label = item[0]
@@ -238,7 +298,12 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
         box_width_label = item[2]
         box_height_label = item[3]
         img_labels.write("2"+" "+str(centre_x_label/width)+" "+str(centre_y_label/height)+" "+str(box_width_label/width)+" "+str(box_height_label/height)+"\n")
+        cv2.rectangle(img_read,(int(centre_x_label-box_width_label),int(centre_y_label-box_height_label)),(int(centre_x_label+box_width_label),int(centre_y_label+box_height_label)),(0,255,0),2)    
+
+    cv2.imwrite(r'data/custom/true_bb_images/'+str(i+1)+'.jpg',img_read)
   plt.close(fig)
+
+
 
 num_train = round(len(dataset)*train_test_ratio)
 if "points" in class_names:
@@ -251,3 +316,4 @@ for i,d in enumerate(dataset):
   if i%500 == 0:
     print("Generated "+str(i+1))
   gen_scatterplot(d,x_dist_type[i],y_dist_type[i],i,x_distribution_param,y_distribution_param,total_samples,num_train)
+  # break
