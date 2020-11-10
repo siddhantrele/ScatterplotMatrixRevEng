@@ -6,13 +6,55 @@ import matplotlib.patches as patches
 
 import cv2
 from google.colab.patches import cv2_imshow
+from matplotlib.path import get_path_collection_extents
+
+
+def getbb(sc, ax):
+    """ Function to return a list of bounding boxes in data coordinates
+        for a scatter plot """
+    ax.figure.canvas.draw() # need to draw before the transforms are set.
+    transform = sc.get_transform()
+    transOffset = sc.get_offset_transform()
+    offsets = sc._offsets
+    paths = sc.get_paths()
+    transforms = sc.get_transforms()
+
+    if not transform.is_affine:
+        paths = [transform.transform_path_non_affine(p) for p in paths]
+        transform = transform.get_affine()
+    if not transOffset.is_affine:
+        offsets = transOffset.transform_non_affine(offsets)
+        transOffset = transOffset.get_affine()
+
+    if isinstance(offsets, np.ma.MaskedArray):
+        offsets = offsets.filled(np.nan)
+
+    bboxes = []
+
+    if len(paths) and len(offsets):
+        if len(paths) < len(offsets):
+            # for usual scatters you have one path, but several offsets
+            paths = [paths[0]]*len(offsets)
+        if len(transforms) < len(offsets):
+            # often you may have a single scatter size, but several offsets
+            transforms = [transforms[0]]*len(offsets)
+
+        for p, o, t in zip(paths, offsets, transforms):
+            result = get_path_collection_extents(
+                transform.frozen(), [p], [t],
+                [o], transOffset.frozen())
+            # bboxes.append(result.inverse_transformed(ax.transData))
+            bboxes.append(result)
+
+
+    return bboxes
 
 ## TO DO: parse these parameters as arguments with argparse ##
-No_of_datasets = 1000 # No of total datasets generated, also number of images that will be generated
+No_of_datasets = 2500 # No of total datasets generated, also number of images that will be generated
 total_samples = 30 # No of points in each image
 train_test_ratio = 0.7 # 70% data will be used to train, 20% to test
 class_names = ["points"] # by default only points are generated
-linear_data_ratio = 1.0
+linear_data_ratio = 0.3
 
 def gen_data(total_samples, No_of_datasets):
   distribution_param = {}
@@ -146,7 +188,7 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   #8. Font size and Marker size
   font_size = random.randint(10,20)
   plt.rcParams.update({'font.size': font_size})
-  ms = random.randint(3,10)
+  ms = random.randint(40,100)
   marker_size = np.pi*ms
   meta_data["font_size_marker_size"] = (font_size,marker_size)
 
@@ -163,10 +205,14 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
 
   fig,ax = plt.subplots(figsize = figsize)
   scattered = ax.scatter(dataset[col1], dataset[col2], s=marker_size, alpha=alpha,  c=np.array([colors]), marker = marker )
-  plt.title('Scatter plot')
-  plt.xlabel(col1)
-  plt.ylabel(col2)
+  # ax.axis('off')
+  # plt.title('Scatter plot')
+  # plt.xlabel(col1)
+  # plt.ylabel(col2)
+  ax.set_yticklabels([])
+  ax.set_xticklabels([])
   #plt.legend()   #Removed legend
+  boxes = getbb(scattered, ax)
 
   #6. Scale of axes  
   xticks = list(ax.get_xticks())
@@ -216,7 +262,7 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
   # print("Dimensions of image are:")
   # print(width,height)
   # print("Box size")
-  bounding_box = fig.dpi*5/90.0
+  bounding_box = ms/10
 
   x_tick_pos = [ ax.transLimits.transform(textobj.get_position()) for textobj in ax.get_xticklabels() if len(textobj.get_text())>0]
   y_tick_pos = [ ax.transLimits.transform(textobj.get_position()) for textobj in ax.get_yticklabels() if len(textobj.get_text())>0]
@@ -270,11 +316,26 @@ def gen_scatterplot(dataset,x_dist_type,y_dist_type,i,x_distribution_param,y_dis
     img_read = cv2.imread(r'data/custom/images/'+str(i+1)+'.jpg')
     img_read = np.array(img_read)
     if "points" in class_names:
-      for xp, yp in zip(xpix, ypix):
-        img_labels.write("0"+" "+str(xp/width)+" "+str(yp/height)+" "+str(bounding_box/width)+" "+str(bounding_box/height)+"\n")
-        x_0 = int(xp)
-        y_0 = int(yp)
-        cv2.rectangle(img_read,(x_0-int(bounding_box),y_0-int(bounding_box)),(x_0+int(bounding_box),y_0+int(bounding_box)),(0,255,0),1)
+      # for xp, yp in zip(xpix, ypix):
+      #   img_labels.write("0"+" "+str(xp/width)+" "+str(yp/height)+" "+str(bounding_box/width)+" "+str(bounding_box/height)+"\n")
+      #   x_0 = int(xp)
+      #   y_0 = int(yp)
+        # cv2.rectangle(img_read,(x_0-int(bounding_box),y_0-int(bounding_box)),(x_0+int(bounding_box),y_0+int(bounding_box)),(0,255,0),1)
+      
+      for box in boxes:
+        correctedy0 = height - box.y0
+        correctedy1 = height - box.y1
+        centreX = (box.x0 + box.x1) /2
+        centreY = (correctedy0 + correctedy1) / 2
+        boxWidth = box.x1 - box.x0
+        boxHeight = correctedy0 - correctedy1
+
+        # cv2.circle(img_read, (int(box.x0),int(correctedy0)), radius=1, color=(0, 0, 255), thickness=-1)
+        # cv2.circle(img_read, (int(box.x1),int(correctedy1)), radius=1, color=(0, 0, 255), thickness=-1)
+        # print(box.x0,correctedy0,box.x1,correctedy1,boxWidth,boxHeight)
+        # cv2.circle(img_read, (int(centreX),int(centreY)), radius=1, color=(0, 0, 255), thickness=-1)
+        img_labels.write("0"+" "+str(centreX/width)+" "+str(centreY/height)+" "+str(boxWidth/width)+" "+str(boxHeight/height)+"\n")
+        cv2.rectangle(img_read,(int(box.x0),int(correctedy0)),(int(box.x1),int(correctedy1)),(0,255,0),1)
     
     if "ticks" in class_names:
       for x_j, y_j in x_tick_pos:
